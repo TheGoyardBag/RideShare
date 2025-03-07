@@ -1,0 +1,130 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Define your datasource block with the appropriate provider and connection URL
+datasource db {
+  provider = "postgresql" // You should use the correct provider for your database
+  url      = env("DATABASE_URL") // Replace with your actual database connection URL
+}
+
+model User {
+  id               Int             @id @default(autoincrement())
+  email            String          @unique
+  password         String 
+  firstName        String
+  lastName         String
+  age              String?
+  gender           String?
+  cpVerified       Int?
+  dlVerified       Int?
+  conversations    Conversation[]  @relation("ConversationParticipants")
+  sentMessages     Message[]       @relation("Sender")
+  recievedMessages Message[]       @relation("Recipient")
+  ridesGiven       Ride[]          @relation("Driver")
+  ridesRequested   Request[]       @relation("Requester")
+  chatEngineSecret String? 
+  chatEngineId     Int?
+}
+
+model Message {
+  id             Int          @id @default(autoincrement())
+  content        String
+  request        Boolean
+  time           DateTime
+  senderId       Int
+  recipientId    Int
+  conversationId Int
+  sender         User         @relation(name: "Sender", fields: [senderId], references: [id])
+  recipient      User         @relation(name: "Recipient", fields: [recipientId], references: [id])
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+
+  @@map("messages")
+}
+
+model Conversation {
+  id            Int       @id @default(autoincrement())
+  participants  User[]    @relation("ConversationParticipants")
+  messages      Message[]
+
+  @@map("conversations")
+}
+
+model Request {
+  id Int @id @default(autoincrement())
+  request Boolean
+  time DateTime
+  rideId Int @unique
+  requesterId Int
+  status Boolean
+  accepted Boolean
+  ride Ride @relation(name: "Ride", fields: [rideId], references: [id])
+  requester User @relation(name: "Requester", fields: [requesterId], references: [id])
+}
+
+model Ride {
+  id Int @id @default(autoincrement())
+  startLoc String
+  endLoc String
+  stops String?
+  request String
+  date String
+  time String
+  numStops Int
+  driverId Int
+  seats String
+  price String
+  driver User @relation(name: "Driver", fields: [driverId], references: [id])
+  rideRequests Request[] @relation("Ride")
+}
+
+model Posting {
+  id Int @id @default(autoincrement())
+  startLoc String
+  endLoc String
+  date String
+  time String
+  driverId Int
+  seats String
+  price String
+  driverName String
+}
+
+model RiderRequest {
+  id Int @id @default(autoincrement())
+  postId Int
+  riderId Int
+}
+
+model Accepted {
+  id Int @id @default(autoincrement())
+  postId Int
+  riderId Int
+}
+
+model Declined {
+  id Int @id @default(autoincrement())
+  postId Int
+  riderId Int
+}
+
+model DriveStatus {
+  id Int @id @default(autoincrement())
+  postId Int
+  status String
+  riderIds String
+}
+
+model Rating {
+  id Int @id @default(autoincrement())
+  driverId Int
+  rating Int
+}
+
+model Verify {
+  id Int @id @default(autoincrement())
+  userId Int
+}
